@@ -17,19 +17,22 @@ router.post("/schedule/:id", InterviewController.scheduleInterview);
 // 5. Mark interview as completed
 router.put("/complete/:id", InterviewController.MarkcompleteInterview);
 
-// 6. User/Admin cancels interview request
+// 6.get interview response details by ID
+router.get("/complete/response/:id", InterviewController.getInterviewResponseById);
+
+// 7. User/Admin cancels interview request
 router.put("/cancel/:id", InterviewController.cancelInterviewStatus);
 
-// 7. Reschedule interview
+// 8. Reschedule interview
 router.put("/reschedule/:id", InterviewController.rescheduleInterview);
 
-// 8. View all interview requests
+// 9. View all interview requests
 router.get("/all", InterviewController.getAllRequests);
 
-// 9. Filter interview requests by status
+// 10. Filter interview requests by status
 router.get("/status", InterviewController.getRequestsByStatus);
 
-// 10. Admin provides feedback and rating after interview
+// 11. Admin provides feedback and rating after interview
 router.post("/feedback/:id", InterviewController.addFeedback);
 
 module.exports = router;

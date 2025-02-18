@@ -10,12 +10,12 @@ exports.getAllTechnologies = (req, res) => {
     })};
 
 exports.createTechnology = (req, res) => {
-    const { technology_id, name, description, image, no_stages, languages, other_technology } = req.body;
-    if (!technology_id || !name || !no_stages) {
+    const { technolgy_id, name, description, image, no_stages, languages, other_technology } = req.body;
+    if (!technolgy_id || !name || !no_stages) {
       return res.status(400).json({ error: "Required fields are missing" });
     }
-    const sql = "INSERT INTO technologies (technology_id, name, description, image, no_stages, languages, other_technology) VALUES (?, ?, ?, ?, ?, ?, ?)";
-    db.query(sql, [technology_id, name, description, image, no_stages, languages, other_technology], (err, result) => {
+    const sql = "INSERT INTO technologies (technolgy_id, name, description, image, no_stages, languages, other_technology) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    db.query(sql, [technolgy_id, name, description, image, no_stages, languages, other_technology], (err, result) => {
       if (err) {
         res.status(500).json({ error: err.message });
       } else {

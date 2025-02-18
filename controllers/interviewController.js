@@ -99,7 +99,52 @@ exports.MarkcompleteInterview =(req, res) => {
   };
 
 
-   // 6. User/Admin cancels interview request
+  //  6.get interview response by id
+  exports.getInterviewResponseById = (req, res) => {
+    const interview_request_id = req.params.id;
+
+    // Query to check interview status
+    const checkSql = `
+        SELECT ir.id, ir.status, 
+               sr.ratings, sr.feedback, sr.interviewquestion 
+        FROM interview_requests ir
+        LEFT JOIN student_interview_responses sr 
+        ON ir.id = sr.student_interview_id
+        WHERE ir.id = ?`;
+
+    db.query(checkSql, [interview_request_id], (err, results) => {
+        if (err) {
+            return res.status(500).json({ error: "Database error.", details: err });
+        }
+
+        if (results.length === 0) {
+            return res.status(404).json({ error: "No interview request found with this ID." });
+        }
+
+        const interview = results[0];
+        const status = parseInt(interview.status); // Ensure status is an integer
+
+        switch (status) {
+            case 1:
+                return res.status(200).json({ message: "Interview is still pending." });
+            case 2:
+                return res.status(200).json({
+                    message: "Interview completed successfully.",
+                    ratings: interview.ratings || "No ratings provided",
+                    feedback: interview.feedback || "No feedback available",
+                    interview_question: interview.interviewquestion || "No interview questions recorded"
+                });
+            case 3:
+                return res.status(400).json({ message: "This interview was canceled by the admin." });
+            case 4:
+                return res.status(400).json({ message: "This interview was canceled by the student." });
+            default:
+                return res.status(500).json({ error: "Unexpected status code.", status });
+        }
+    });
+};
+
+   // 7. User/Admin cancels interview request
 exports.cancelInterviewStatus =(req, res) => {
     const interview_request_id = req.params.id;
     const { cancelled_by } = req.body; // 'admin' or 'student'
@@ -131,7 +176,7 @@ exports.cancelInterviewStatus =(req, res) => {
     });
   };
 
-// 7. Reschedule interview
+// 8. Reschedule interview
 exports.rescheduleInterview = (req, res) => {
     const interview_request_id = req.params.id;
     const { date, time } = req.body;
@@ -163,7 +208,7 @@ exports.rescheduleInterview = (req, res) => {
   };
 
 
-  // 8. View all interview requests
+  // 9. View all interview requests
 exports.getAllRequests = (req, res) => {
   db.query(`SELECT * FROM interview_requests`, (err, results) => {
     if (err) return res.status(500).send(err);
@@ -171,7 +216,7 @@ exports.getAllRequests = (req, res) => {
   });
 };
 
-// 9. Filter interview requests by status
+// 10. Filter interview requests by status
 exports.getRequestsByStatus = (req, res) => {
     const { status } = req.query;
 
@@ -187,7 +232,7 @@ exports.getRequestsByStatus = (req, res) => {
     });
 };
 
-// 10. Admin provides feedback and rating after interview
+// 11. Admin provides feedback and rating after interview
 exports.addFeedback = (req, res) => {
     const student_interview_id = req.params.id;
     const { student_id, technology_id, student_name, mode, techstack, level, ratings, feedback, interviewquestion } = req.body;
