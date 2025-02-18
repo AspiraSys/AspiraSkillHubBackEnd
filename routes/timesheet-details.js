@@ -109,38 +109,37 @@ router.get("/timesheets", async (req, res) => {
 });
 
 
-
-// Get filtered timesheets by user_id
-// GET http://localhost:5000/api/admin/timesheet/1
+// Get filtered timesheets by user_id with additional filters (month, hours, type)
+// GET http://localhost:5000/api/admin/timesheet/1?month=2024-02&hours=08&type=1
 router.get("/timesheet/:user_id", (req, res) => {
     const userId = req.params.user_id;
-    const { month, startDate, endDate, type } = req.query;
+    const { month, startDate, endDate, type, hours } = req.query;
 
     let query = `SELECT * FROM student_timesheets WHERE user_id = ?`;
     let queryParams = [userId];
 
     // Filter by month (format: YYYY-MM)
-    // GET http://localhost:5000/api/admin/timesheet/1?month=2024-01
-
     if (month) {
         query += ` AND DATE_FORMAT(date, '%Y-%m') = ?`;
         queryParams.push(month);
     }
 
     // Filter by date range (startDate and endDate must be in YYYY-MM-DD format)
-    // GET http://localhost:5000/api/admin/timesheet/1?startDate=2024-01-01&endDate=2024-01-15
-
     if (startDate && endDate) {
         query += ` AND date BETWEEN ? AND ?`;
         queryParams.push(startDate, endDate);
     }
 
     // Filter by category (type)
-    // GET http://localhost:5000/api/admin/timesheet/1?type=1
-
     if (type) {
         query += ` AND type = ?`;
         queryParams.push(type);
+    }
+
+    // Filter by hours worked
+    if (hours) {
+        query += ` AND hours = ?`;
+        queryParams.push(hours);
     }
 
     query += ` ORDER BY date DESC`; // Sorting by latest entry
@@ -157,7 +156,6 @@ router.get("/timesheet/:user_id", (req, res) => {
         res.status(200).json(results);
     });
 });
-
 
 
 
