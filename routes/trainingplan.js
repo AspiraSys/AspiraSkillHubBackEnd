@@ -247,6 +247,48 @@ router.get("/aspirant/:user_id/trainingplan/:technology_id/:stage_id", (req, res
 
 
 
+router.get("/aspirants-progress/stages/:technology_id/:user_id", (req, res) => {
+    const { technology_id, user_id } = req.params;
+
+    const query = `
+        SELECT 
+            ts.id AS stage_id,
+            ts.name AS stage_name,
+            COUNT(DISTINCT tm.id) AS total_materials,
+            COUNT(DISTINCT CASE WHEN st.status = '1' THEN st.material_id ELSE NULL END) AS completed_materials
+        FROM technology_stages ts
+        LEFT JOIN technology_material tm ON ts.id = tm.stage_id AND tm.technology_id = ?
+        LEFT JOIN student_technologies st ON tm.id = st.material_id AND st.user_id = ?
+        WHERE ts.technology_id = ?
+        GROUP BY ts.id, ts.name
+        ORDER BY ts.id;
+    `;
+
+    db.query(query, [technology_id, user_id, technology_id], (err, results) => {
+        if (err) {
+            return res.status(500).json({ error: "Database error", details: err.message });
+        }
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: "No stages found for this technology." });
+        }
+
+        // Formatting results
+        const formattedResults = results.map(row => ({
+            stage_id: row.stage_id,
+            stage_name: row.stage_name,
+            completion_percentage: row.total_materials > 0 
+                ? ((row.completed_materials / row.total_materials) * 100).toFixed(2) + "%"
+                : "0.00%"
+        }));
+
+        res.json(formattedResults);
+    });
+});
+
+
+
+
 
 
 module.exports = router;
