@@ -26,7 +26,10 @@ router.post("/register", async (req, res) => {
           const hashedPassword = await bcrypt.hash(password, 10);
 
           // Insert user into users table
-          const insertUserSQL = "INSERT INTO users (name, email, password, role_id) VALUES (?, ?, ?, ?)";
+          const insertUserSQL = `INSERT INTO users (name, email, password, role_id, created_at, updated_at) 
+  VALUES (?, ?, ?, ?, NOW(), NOW())`;
+
+ //   const insertUserSQL = "INSERT INTO users (name, email, password, role_id) VALUES (?, ?, ?, ?)";
           db.query(insertUserSQL, [name, email, hashedPassword, role_id], (err, result) => {
               if (err) return res.status(500).json({ error: "Error inserting user", details: err.sqlMessage });
 
@@ -34,7 +37,7 @@ router.post("/register", async (req, res) => {
 
               // If user is an admin (role_id = 1), add entry in admins table
               if (role_id == 1) {
-                  const insertAdminSQL = "INSERT INTO admins (user_id, first_name, last_name) VALUES (?, ?, ?)";
+                  const insertAdminSQL = "INSERT INTO admins (user_id, first_name, last_name,created_at,updated_at) VALUES (?, ?, ?,NOW(),NOW())";
                   db.query(insertAdminSQL, [userId, name.split(" ")[0], name.split(" ")[1] || ""], (err) => {
                       if (err) {
                           return res.status(500).json({ error: "Error inserting admin",details: err.sqlMessage });
