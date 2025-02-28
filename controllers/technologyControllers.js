@@ -1,4 +1,4 @@
-const db = require("../models/db");
+const db = require("../config/db");
 
 exports.getAllTechnologies = (req, res) => {
     db.query("SELECT * FROM technologies", (err, results) => {

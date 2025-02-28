@@ -1,4 +1,4 @@
-const db = require('../models/db');
+const db = require('../config/db');
 
 // Fetch all users from students table
 exports.getAllStudents = (req, res) => {

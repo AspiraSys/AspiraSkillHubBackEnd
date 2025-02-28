@@ -1,4 +1,4 @@
-const db = require("../models/db");
+const db = require("../config/db");
 
 exports.getAllTechnologiesStages = (req, res) => {
     const sql = "SELECT * FROM technology_stages";
