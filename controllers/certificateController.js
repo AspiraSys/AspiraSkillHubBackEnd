@@ -2,12 +2,46 @@ const db = require('../config/db');
 
 // Fetch all users from students table
 exports.getAllStudents = (req, res) => {
-    const sql = `SELECT * FROM students`;
-    db.query(sql, (err, results) => {
+    // Step 1: Get all students
+    const studentSql = `SELECT * FROM students`;
+
+    db.query(studentSql, (err, students) => {
         if (err) return res.status(500).json({ error: err.message });
-        res.json(results);
+
+        if (students.length === 0) return res.json([]);
+
+        // Step 2: Get all student_technologies using user_id
+        const userIds = students.map(student => student.user_id);
+        const studentTechSql = `
+            SELECT st.user_id, t.name AS technology_name 
+            FROM student_technologies st
+            JOIN technologies t ON st.technology_id = t.id
+            WHERE st.user_id IN (?);
+        `;
+
+        db.query(studentTechSql, [userIds], (err, studentTechs) => {
+            if (err) return res.status(500).json({ error: err.message });
+
+            // Step 3: Map technologies to students using user_id (Remove Duplicates)
+            const studentTechMap = {};
+            studentTechs.forEach(({ user_id, technology_name }) => {
+                if (!studentTechMap[user_id]) {
+                    studentTechMap[user_id] = new Set();
+                }
+                studentTechMap[user_id].add(technology_name);
+            });
+
+            // Step 4: Attach unique technology_names to each student
+            const finalStudents = students.map(student => ({
+                ...student,
+                technology_names: studentTechMap[student.user_id] ? [...studentTechMap[student.user_id]] : []
+            }));
+
+            res.json(finalStudents);
+        });
     });
 };
+
 
 // Create a new certificate
 exports.createCertificate = (req, res) => {
