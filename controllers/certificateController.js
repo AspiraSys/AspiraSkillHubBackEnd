@@ -12,13 +12,34 @@ exports.getAllStudents = (req, res) => {
 // Create a new certificate
 exports.createCertificate = (req, res) => {
     const { credential_id, user_id, technology_id, name, link, issue_date, image } = req.body;
-    const sql = `INSERT INTO student_certificates (credential_id, user_id, technology_id, name, link, issue_date, image, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`;
-    
-    db.query(sql, [credential_id, user_id, technology_id, name, link, issue_date, image], (err, result) => {
+
+    // SQL query to check if the user has completed all stages (1, 2, 3) for the given technology_id
+    const checkCompletionQuery = `
+        SELECT COUNT(DISTINCT tech_stage_id) AS completed_stages
+        FROM student_technologies
+        WHERE user_id = ? AND technology_id = ? AND status = '1';
+    `;
+
+    db.query(checkCompletionQuery, [user_id, technology_id], (err, result) => {
         if (err) return res.status(500).json({ error: err.message });
-        res.json({ message: 'Certificate created successfully', id: result.insertId });
+
+        if (result.length === 0 || result[0].completed_stages < 3) {
+            return res.status(400).json({ message: `User has not completed all required stages for technology ID: ${technology_id}.` });
+        }
+
+        // If completed, proceed with creating the certificate
+        const insertCertificateQuery = `
+            INSERT INTO student_certificates (credential_id, user_id, technology_id, name, link, issue_date, image, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, NOW());
+        `;
+
+        db.query(insertCertificateQuery, [credential_id, user_id, technology_id, name, link, issue_date, image], (err, result) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ message: 'Certificate created successfully', id: result.insertId });
+        });
     });
 };
+
 
 // Update an existing certificate
 exports.updateCertificate = (req, res) => {
