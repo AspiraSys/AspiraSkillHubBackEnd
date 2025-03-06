@@ -6,6 +6,7 @@ router.get("/", TechnologyStageController.getAllTechnologiesStages);
 router.post("/create", TechnologyStageController.createTechnologyStages);
 router.put("/update/:id", TechnologyStageController.updateTechnologyStages);
 router.delete("/delete/:id", TechnologyStageController.deleteTechnology);
+router.get("/:technology_id", TechnologyStageController.getTechnologyStagesByTechnologyId);
 
 // Material routes
 router.get("/:technology_id/beginner", TechnologyStageController.getallmaterialsBeginnerstage);

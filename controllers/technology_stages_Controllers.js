@@ -86,6 +86,26 @@ exports.getallmaterialsBeginnerstage = (req, res) => {
         res.json(results);
     });
 };
+// Get stages by technology id
+exports.getTechnologyStagesByTechnologyId = (req, res) => {
+    const { technology_id } = req.params;
+
+    const sql = "SELECT * FROM technology_stages WHERE technology_id = ?";
+
+    db.query(sql, [technology_id], (err, results) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: "No stages found for this technology" });
+        }
+
+        res.json(results);
+    });
+};
+
+
 
 // View all materials for Intermediate stage
 exports.getallmaterialsIntermediatestage = (req, res) => {
