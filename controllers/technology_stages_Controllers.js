@@ -169,10 +169,9 @@ exports.getsinglematerialsstages =(req, res) => {
     });
 };
 
-// Create a New Material Entry
 exports.Createsinglematerialsstages = (req, res) => {
     const { stage, technology_id } = req.params;
-    const { language_id, order_id, name, referal_link_1, referal_link_2, image, type, description, description_2, description_3, duration } = req.body;
+    const { language_id, name, referal_link_1, referal_link_2, image, type, description, description_2, description_3, duration } = req.body;
 
     console.log("Received Stage:", stage);
     console.log("Received Technology ID:", technology_id);
@@ -191,37 +190,41 @@ exports.Createsinglematerialsstages = (req, res) => {
         return res.status(400).json({ error: "Invalid technology ID" });
     }
 
-    // Verify that the technology exists
-    const techCheckSQL = "SELECT id FROM technologies WHERE id = ?";
-    db.query(techCheckSQL, [tech_id], (err, techResult) => {
+    // Find the last order_id for this technology_id, stage_id, and language_id
+    const orderQuery = `
+        SELECT MAX(order_id) AS last_order FROM technology_material
+        WHERE technology_id = ? AND stage_id = ? AND language_id = ?
+    `;
+
+    db.query(orderQuery, [tech_id, stage_id, language_id], (err, orderResult) => {
         if (err) {
-            console.error("Error checking technology:", err);
-            return res.status(500).json({ error: "Database error while checking technology." });
+            console.error("Error fetching last order_id:", err);
+            return res.status(500).json({ error: "Database error while fetching order_id." });
         }
 
-        console.log("Technology Check Result:", techResult);
+        // If no records exist, start from 1; otherwise, increment
+        const newOrderId = (orderResult[0].last_order || 0) + 1;
 
-        if (techResult.length === 0) {
-            return res.status(400).json({ error: "Technology does not exist" });
-        }
+        console.log(`New order_id for language ${language_id}:`, newOrderId);
 
-        // If both are valid, insert into technology_material
-        const sql = `
+        // Insert the new material with the calculated order_id
+        const insertSQL = `
             INSERT INTO technology_material (technology_id, stage_id, language_id, order_id, name, referal_link_1, referal_link_2, image, type, description, description_2, description_3, duration)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
-        const values = [tech_id, stage_id, language_id, order_id, name, referal_link_1, referal_link_2, image, type, description, description_2, description_3, duration];
+        const values = [tech_id, stage_id, language_id, newOrderId, name, referal_link_1, referal_link_2, image, type, description, description_2, description_3, duration];
 
-        db.query(sql, values, (err, result) => {
+        db.query(insertSQL, values, (err, result) => {
             if (err) {
                 console.error("Error inserting material:", err.sqlMessage);
                 return res.status(500).json({ error: "Database error while inserting data.", details: err.sqlMessage });
             }
-            res.json({ message: "Material added successfully!", id: result.insertId });
+            res.json({ message: "Material added successfully!", id: result.insertId, order_id: newOrderId });
         });
     });
 };
+
 
 
 // update Technology Material
