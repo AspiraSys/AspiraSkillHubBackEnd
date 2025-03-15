@@ -1,24 +1,28 @@
-// controllers/registrationController.js
-const Registration = require("../models/Registration");
+const db = require("../config/db");
 
+// Get All Registrations
 exports.getAllRegistrations = (req, res) => {
-    Registration.getAllRegistrations((err, results) => {
+    db.query("SELECT * FROM registrations", (err, results) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(results);
     });
 };
 
+// Get Registration by ID
 exports.getRegistrationById = (req, res) => {
     const { id } = req.params;
-    Registration.getRegistrationById(id, (err, result) => {
+    db.query("SELECT * FROM registrations WHERE id = ?", [id], (err, result) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(result);
     });
 };
 
+// Add New Registration
 exports.addNewRegistration = (req, res) => {
     const { email } = req.body;
-    Registration.addNewRegistration(email, (err, result) => {
+    if (!email) return res.status(400).json({ error: "Email is required" });
+
+    db.query("INSERT INTO registrations (email) VALUES (?)", [email], (err, result) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ message: "Registration added successfully", result });
     });
