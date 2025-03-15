@@ -230,7 +230,7 @@ exports.Createsinglematerialsstages = (req, res) => {
 // update Technology Material
 exports.updatesinglematerialsstages = (req, res) => {
     const { stage, technology_id, id } = req.params;
-    const { language_id, order_id, name, referal_link_1, referal_link_2, image, type, description, description_2, description_3, duration } = req.body;
+    const { language_id, name, referal_link_1, referal_link_2, image, type, description, description_2, description_3, duration, order_id } = req.body;
 
     // Map stage names to stage_id
     const stageMap = { beginner: 1, intermediate: 2, advanced: 3 };
@@ -240,26 +240,45 @@ exports.updatesinglematerialsstages = (req, res) => {
         return res.status(400).json({ error: "Invalid stage" });
     }
 
-    const updateSQL = `
-        UPDATE technology_material 
-        SET language_id=?, order_id=?, name=?, referal_link_1=?, referal_link_2=?, image=?, type=?, description=?, description_2=?, description_3=?, duration=?, updated_at=NOW() 
-        WHERE id=? AND technology_id=? AND stage_id=?`;
+    // Query to get the existing order_id if not provided
+    const getOrderSQL = `SELECT order_id FROM technology_material WHERE id=? AND technology_id=? AND stage_id=?`;
 
-    const values = [language_id, order_id, name, referal_link_1, referal_link_2, image, type, description, description_2, description_3, duration, id, technology_id, stage_id];
-
-    db.query(updateSQL, values, (err, result) => {
+    db.query(getOrderSQL, [id, technology_id, stage_id], (err, result) => {
         if (err) {
-            console.error("Error updating material:", err);
+            console.error("Error fetching existing order_id:", err);
             return res.status(500).json({ error: "Internal Server Error" });
         }
 
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ error: "Material not found or not updated" });
+        if (result.length === 0) {
+            return res.status(404).json({ error: "Material not found" });
         }
 
-        res.json({ message: "Material updated successfully" });
+        // Use existing order_id if not provided
+        const finalOrderId = order_id !== undefined ? order_id : result[0].order_id;
+
+        // Update query
+        const updateSQL = `
+            UPDATE technology_material 
+            SET language_id=?, order_id=?, name=?, referal_link_1=?, referal_link_2=?, image=?, type=?, description=?, description_2=?, description_3=?, duration=?, updated_at=NOW() 
+            WHERE id=? AND technology_id=? AND stage_id=?`;
+
+        const values = [language_id, finalOrderId, name, referal_link_1, referal_link_2, image, type, description, description_2, description_3, duration, id, technology_id, stage_id];
+
+        db.query(updateSQL, values, (err, result) => {
+            if (err) {
+                console.error("Error updating material:", err);
+                return res.status(500).json({ error: "Internal Server Error" });
+            }
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ error: "Material not updated" });
+            }
+
+            res.json({ message: "Material updated successfully" });
+        });
     });
 };
+
 
 // Delete Technology Material
 exports.DeleteSingleMaterialsStages = (req, res) => {
