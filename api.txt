@@ -1,20 +1,19 @@
 New Registration
 
-/admin/registrations
-/admin/registration/:id
-/admin/registration/add
 
 
 Master Data
-/admin/masterdata
-/admin/masterdata/:id
+/admin/dashboard/totalaspirants
+/admin/masterdata/list
+/admin/masterdata/view/:id
+/admin/masterdata/update-jobstatus/:id
 
 Dashboard
 /admin/dashboard/totalaspirants
 /admin/dashboard/totalcourses
 /admin/dashboard/enrolled
 /admin/dashboard/getjob
-/admin/dashboard/requestaccess
+/admin/dashboard/requestaccess - not yet
 /admin/dashboard/recentproject
 /admin/dashboard/events
 
