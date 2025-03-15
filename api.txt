@@ -1,0 +1,24 @@
+New Registration
+
+
+
+Master Data
+/admin/dashboard/totalaspirants
+/admin/masterdata/list
+/admin/masterdata/view/:id
+/admin/masterdata/update-jobstatus/:id
+
+Dashboard
+/admin/dashboard/totalaspirants
+/admin/dashboard/totalcourses
+/admin/dashboard/enrolled
+/admin/dashboard/getjob
+/admin/dashboard/requestaccess - not yet
+/admin/dashboard/recentproject
+/admin/dashboard/events
+
+
+Profile
+/admin/profile/view/:id
+/admin/profile/edit/:id
+/admin/profile/change-password/:id

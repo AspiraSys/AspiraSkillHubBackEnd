@@ -1,0 +1,12 @@
+<<<<<<< HEAD
+<<<<<<< HEAD
+.env
+node_modules/
+=======
+/node_modules
+.env
+>>>>>>> origin/Asma
+=======
+/node_modules
+.env
+>>>>>>> origin/Safwaa
