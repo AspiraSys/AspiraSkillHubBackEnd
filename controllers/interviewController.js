@@ -1,4 +1,4 @@
-const db = require("../models/db");
+const db = require("../config/db");
 
 
 // 1. User sends an interview request

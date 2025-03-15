@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -11,8 +10,6 @@ const eventRoutes = require("./routes/event");
 
 
 require('dotenv').config();
-const app = express();
-const port = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
@@ -27,13 +24,33 @@ app.use("/api/admin", timesheetRoutes);
 app.use("/api/admin",eventRoutes );
 app.use("/api/admin",trainingplanRoutes );
 
+const express = require("express");
+const dotenv = require("dotenv");
+
+
+dotenv.config();
+const app = express();
+const port = process.env.PORT || 5000;
+
+// Middleware
+app.use(express.json()); // Replaces bodyParser.json()
+
+
+// Import Routes
+const technologyRoutes = require("./routes/technologyroute");
+const technologyStageRoutes = require("./routes/technology_stages_routes");
+const certificateRoutes = require('./routes/certificateroutes');
+const interviewRoutes = require("./routes/interviewroutes");
+
+// Define Routes
+app.use("/admin/technologies", technologyRoutes);
+app.use("/admin/technology_stages", technologyStageRoutes);
+app.use('/admin', certificateRoutes);
+app.use("/admin/interview", interviewRoutes);
 
 
 // Start Server
 app.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}`);
-});
-=======
 // server.js
 const express = require("express");
 const cors = require("cors");
@@ -57,4 +74,5 @@ app.use(profileRoutes);
 // Start Server
 const PORT = 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
->>>>>>> origin/Safwaa
+    console.log(`Server running on port ${port}`);
+});
