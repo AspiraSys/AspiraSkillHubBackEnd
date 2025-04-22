@@ -1,5 +1,86 @@
-New Registration
+Authentication	
+/api/admin/login	POST
+/api/admin/forgot-password	POST
+/api/admin/reset-password/:token	POST
 
+
+My Learning	
+/admin/technologies	GET
+/admin/technologies/create	POST
+/admin/technologies/update/:id	PUT / UPDATE
+/admin/technologies/delete/:id	DELETE
+/admin/technologies/stages-view/:id	GET
+
+Technology Stages	
+/admin/technology_stages	GET
+/admin/technology_stages/create	POST
+/admin/technology_stages/update/:id	PUT / UPDATE
+/admin/technology_stages/delete/:id	DELETE
+
+Technology Materials	
+/admin/technology_stages/:technology_id/beginner	GET
+/admin/technology_stages/:technology_id/intermediate	GET
+/admin/technology_stages/:technology_id/advance	GET
+/admin/technology_stages/:technology_id/:stage/view/:id	GET
+/admin/technology_stages/:technology_id/:stage/create	POST
+/admin/technology_stages/:technology_id/:stage/update/:id	PUT / UPDATE
+/admin/technology_stages/:technology_id/:stage/delete/:id	DELETE
+/admin/technology_stages/view-all-material	GET
+
+Aspirants progress
+
+Timesheet	
+api/admin/aspirants-progress	GET
+api/admin/aspirants-progress?startDate= &endDate=	GET
+api/admin/aspirants-progress?month=	GET
+api/admin/aspirants-progress?gender=	GET
+api/admin/timesheet/:user_id	GET
+api/admin/timesheet/user_id?month=&hours=&type=	GET
+api/admin/timesheet/user_id?startDate=&endDate=	GET
+api/admin/timesheet/:user_id/productive-rate	GET
+
+Training Plan	
+api/admin/aspirant/:user_id/technologies	GET
+api/admin/technology/:technology_id/language/:language_id/details	GET
+api/admin/aspirant/:user_id/technologies	POST
+api/admin/aspirant/:user_id/technologies/:technology_id	DELETE
+api/admin/aspirant/:user_id/trainingplan/:technology_id/:stage_id	GET
+
+Certificates	
+/admin/aspirants-certificates 	GET
+/admin/aspirants-certificates/create 	POST
+/admin/aspirants-certificates/update/:id	PUT / UPDATE
+/admin/aspirants-certificates/delete/:id	DELETE
+/admin/aspirants-certificates/view-all	GET
+/admin/aspirants-certificates/view/:id	GET
+
+Interviews	
+/admin/interview/request - for api testing purpose.	POST
+/admin/interview/request/:id	GET
+/admin/interview/pending	GET
+/admin/interview/schedule/:id	POST
+/admin/interview/complete/:id	PUT / UPDATE
+/admin/interview/cancel/:id	PUT / UPDATE
+/admin/interview/reschedule/:id	PUT / UPDATE
+/admin/interview/all	GET
+/admin/interview/feedback/:id	POST
+/admin/interview/complete/response/:id	GET
+/admin/interview/status?status=1	GET
+/admin/interview/status?status=2	GET
+/admin/interview/status?status=3	GET
+/admin/interview/status?status=4	GET
+
+New Registration	
+/admin/registrations	GET
+/admin/registration/:id	GET
+/admin/registration/add	POST
+
+Events & info	
+api/admin/events	GET
+api/admin/events	POST
+api/admin/events/:id	GET
+api/admin/events/:id	PUT / UPDATE
+api/admin/events/:id	DELETE
 
 
 Master Data
@@ -8,17 +89,19 @@ Master Data
 /admin/masterdata/view/:id
 /admin/masterdata/update-jobstatus/:id
 
-Dashboard
-/admin/dashboard/totalaspirants
-/admin/dashboard/totalcourses
-/admin/dashboard/enrolled
-/admin/dashboard/getjob
-/admin/dashboard/requestaccess - not yet
-/admin/dashboard/recentproject
-/admin/dashboard/events
-
-
-Profile
+Dashboard	
+/admin/dashboard/totalaspirants	GET
+/admin/dashboard/totalcourses	GET
+/admin/dashboard/enrolled	GET
+/admin/dashboard/getjob	GET
+/admin/dashboard/requestaccess	GET
+/admin/dashboard/recentproject	GET
+/admin/dashboard/events	GET
+	
+Profile	
 /admin/profile/view/:id
-/admin/profile/edit/:id
+/admin/profile/:id	GET
+/admin/profile/edit/:id	PUT / UPDATE
+/admin/profile/password/:id	PUT / UPDATE
 /admin/profile/change-password/:id
+/admin/logout	POST
