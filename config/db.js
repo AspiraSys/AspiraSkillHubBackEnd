@@ -9,14 +9,14 @@ const connection = mysql.createPool({
     port: process.env.DB_PORT,
     connectTimeout: 30000,   
     waitForConnections: true,
-    connectionLimit: 10,    
+    connectionLimit: 10,     
     queueLimit: 0
 });
 
 setInterval(() => {
     connection.query('SELECT 1', (err, results) => {
         if (err) {
-            console.error('Keep-alive query failed:', err.message); // Only log if there is an error
+            console.error('Keep-alive query failed:', err.message); 
         }
     });
 }, 30000); 
@@ -27,7 +27,7 @@ connection.getConnection((err, conn) => {
         console.error('Database connection failed:', err);
     } else {
         console.log('Connected to the database.');
-        conn.release(); // Release connection back to the pool
+        conn.release(); 
     }
 });
 
