@@ -7,74 +7,181 @@ const db = require("../config/db");
 // GET http://localhost:5000/api/admin/aspirants-progress?gender=male 
 
 
+// router.get("/aspirants-progress", (req, res) => {
+//     const { startDate, endDate, month, category, gender } = req.query;
+
+//     const query = `
+//         SELECT
+//     s.id, 
+//     CONCAT(s.first_name, ' ', COALESCE(s.last_name, '')) AS full_name,
+//     s.aspirant_id, 
+//     s.gender, 
+//     CASE 
+//         WHEN s.mode = '1' THEN 'Remote' 
+//         WHEN s.mode = '2' THEN 'Onsite' 
+//         ELSE 'Unknown' 
+//     END AS mode,
+//     t.name AS technology,
+//     ts.type AS last_status,
+//     TIMESTAMPDIFF(HOUR, ts.created_at, NOW()) AS last_updated_hours,
+
+//     -- Training Plan Status Calculation
+//     IFNULL(
+//         (
+//             SELECT 
+//                 ROUND(
+//                     (COUNT(DISTINCT tm.stage_id) / COUNT(DISTINCT st2.id)) * 100, 
+//                     2
+//                 )
+//             FROM 
+//                 student_technologies st2
+//             JOIN 
+//                 technology_material tm ON st2.technology_id = tm.technology_id
+//             JOIN 
+//                 technology_stages ts2 ON ts2.id = tm.stage_id
+//             WHERE 
+//                 st2.user_id = s.user_id
+//                 AND st2.status = '1' -- Completed stage
+//                 AND tm.technology_id = ts.technology_id
+//                 AND tm.stage_id = ts2.id -- Ensure we're checking the correct stage for the material
+//         ), 0
+//     ) AS training_plan_status
+
+// FROM students s
+// LEFT JOIN student_timesheets ts 
+//     ON s.user_id = ts.user_id 
+// LEFT JOIN technologies t ON ts.technology_id = t.id
+// WHERE ts.created_at = (
+//         SELECT MAX(created_at) 
+//         FROM student_timesheets 
+//         WHERE user_id = s.user_id
+//     )
+//     ${startDate && endDate ? "AND ts.date BETWEEN ? AND ?" : ""}
+//     ${month ? "AND MONTH(ts.date) = ?" : ""}
+//     ${category ? "AND ts.type = ?" : ""}
+//     ${gender ? "AND s.gender = ?" : ""}
+// GROUP BY 
+//     s.id, s.first_name, s.last_name, s.aspirant_id, s.gender, s.mode, 
+//     t.name, ts.type, ts.created_at, s.user_id, ts.technology_id
+// ORDER BY ts.created_at DESC;
+//  `;
+
+//     const params = [];
+//     if (startDate && endDate) params.push(startDate, endDate);
+//     if (month) params.push(month);
+//     if (category) params.push(category);
+//     if (gender) params.push(gender);
+
+//     db.query(query, params, (err, results) => {
+//         if (err) {
+//             return res.status(500).json({ error: "Database query error", details: err.message });
+//         }
+//         res.json(results);
+//     });
+// });
+
 router.get("/aspirants-progress", (req, res) => {
     const { startDate, endDate, month, category, gender } = req.query;
 
-    const query = `
-        SELECT
-            s.id, 
+    let query = `
+        SELECT 
+            s.id,
             CONCAT(s.first_name, ' ', COALESCE(s.last_name, '')) AS full_name,
-            s.aspirant_id, 
-            s.gender, 
+            s.aspirant_id,
+            s.gender,
             CASE 
                 WHEN s.mode = '1' THEN 'Remote' 
                 WHEN s.mode = '2' THEN 'Onsite' 
                 ELSE 'Unknown' 
             END AS mode,
             t.name AS technology,
-            ts.type AS last_status,
-            TIMESTAMPDIFF(HOUR, ts.created_at, NOW()) AS last_updated_hours,
+            ts_latest.type AS last_status,
+            TIMESTAMPDIFF(HOUR, ts_latest.created_at, NOW()) AS last_updated_hours,
 
-            -- Training Plan Status Calculation
-            IFNULL(
-                (
-                    SELECT 
-                        ROUND((COUNT(DISTINCT tm.stage_id) / COUNT(DISTINCT ts2.id)) * 100, 2)
-                    FROM 
-                        student_technologies st2
-                    JOIN 
-                        technology_material tm ON st2.technology_id = tm.technology_id
-                    JOIN 
-                        technology_stages ts2 ON ts2.id = tm.stage_id
-                    WHERE 
-                        st2.user_id = s.user_id
-                        AND st2.status = '1' -- Completed stage
-                        AND tm.technology_id = ts.technology_id
-                ), 0
-            ) AS training_plan_status
+            -- Calculate Training Plan Status for that technology
+            IFNULL((
+                SELECT 
+                    ROUND(
+                        (SUM(CASE WHEN st.status = '1' THEN 1 ELSE 0 END) / COUNT(*)) * 100, 
+                        2
+                    )
+                FROM student_technologies st
+                WHERE 
+                    st.user_id = s.user_id
+                    AND st.technology_id = latest_tech.technology_id
+                    AND st.deleted_at IS NULL
+            ), 0) AS training_plan_status
 
         FROM students s
-        LEFT JOIN student_timesheets ts 
-            ON s.user_id = ts.user_id 
-        LEFT JOIN technologies t ON ts.technology_id = t.id
-        WHERE ts.created_at = (
-                SELECT MAX(created_at) 
-                FROM student_timesheets 
-                WHERE user_id = s.user_id
-            )
-            ${startDate && endDate ? "AND ts.date BETWEEN ? AND ?" : ""}
-            ${month ? "AND MONTH(ts.date) = ?" : ""}
-            ${category ? "AND ts.type = ?" : ""}
-            ${gender ? "AND s.gender = ?" : ""}
-        GROUP BY s.id, s.first_name, s.last_name, s.aspirant_id, s.gender, s.mode, t.name, ts.type, ts.created_at, s.user_id, ts.technology_id
-        ORDER BY ts.created_at DESC
+
+        -- Find student's latest technology update
+        INNER JOIN (
+            SELECT st1.user_id, st1.technology_id
+            FROM student_technologies st1
+            INNER JOIN (
+                SELECT user_id, MAX(updated_at) AS max_updated
+                FROM student_technologies
+                WHERE deleted_at IS NULL
+                GROUP BY user_id
+            ) st2 
+            ON st1.user_id = st2.user_id AND st1.updated_at = st2.max_updated
+            WHERE st1.deleted_at IS NULL
+        ) AS latest_tech
+        ON latest_tech.user_id = s.user_id
+
+        -- Technology name
+        LEFT JOIN technologies t ON t.id = latest_tech.technology_id
+
+        -- Latest timesheet status
+        LEFT JOIN (
+            SELECT t1.*
+            FROM student_timesheets t1
+            INNER JOIN (
+                SELECT user_id, MAX(created_at) AS max_created
+                FROM student_timesheets
+                GROUP BY user_id
+            ) t2 
+            ON t1.user_id = t2.user_id AND t1.created_at = t2.max_created
+        ) AS ts_latest 
+        ON ts_latest.user_id = s.user_id
+
+        WHERE 1=1
     `;
 
     const params = [];
-    if (startDate && endDate) params.push(startDate, endDate);
-    if (month) params.push(month);
-    if (category) params.push(category);
-    if (gender) params.push(gender);
+
+    if (startDate && endDate) {
+        query += " AND ts_latest.date BETWEEN ? AND ?";
+        params.push(startDate, endDate);
+    }
+    if (month) {
+        query += " AND MONTH(ts_latest.date) = ?";
+        params.push(month);
+    }
+    if (category) {
+        query += " AND ts_latest.type = ?";
+        params.push(category);
+    }
+    if (gender) {
+        query += " AND s.gender = ?";
+        params.push(gender);
+    }
+
+    query += `
+        GROUP BY 
+            s.id, s.first_name, s.last_name, s.aspirant_id, s.gender, s.mode, 
+            t.name, ts_latest.type, ts_latest.created_at, s.user_id, latest_tech.technology_id
+        ORDER BY ts_latest.created_at DESC
+    `;
 
     db.query(query, params, (err, results) => {
         if (err) {
+            console.error(err);
             return res.status(500).json({ error: "Database query error", details: err.message });
         }
         res.json(results);
     });
 });
-
-
 
 // Get all timesheets grouped by user
 router.get("/timesheets", async (req, res) => {
@@ -119,11 +226,12 @@ router.get("/timesheet/:user_id", (req, res) => {
     let queryParams = [userId];
 
     // Filter by month (format: YYYY-MM)
+    // http://localhost:5000/api/admin/timesheet/134?month=2024-11
     if (month) {
         query += ` AND DATE_FORMAT(date, '%Y-%m') = ?`;
         queryParams.push(month);
     }
-
+    // http://localhost:5000/api/admin/timesheet/134?startDate=2024-11-31&endDate=2024-12-31
     // Filter by date range (startDate and endDate must be in YYYY-MM-DD format)
     if (startDate && endDate) {
         query += ` AND date BETWEEN ? AND ?`;
@@ -131,12 +239,14 @@ router.get("/timesheet/:user_id", (req, res) => {
     }
 
     // Filter by category (type)
+    // http://localhost:5000/api/admin/timesheet/134?type=3
     if (type) {
         query += ` AND type = ?`;
         queryParams.push(type);
     }
 
     // Filter by hours worked
+    // http://localhost:5000/api/admin/timesheet/134?&hours=06
     if (hours) {
         query += ` AND hours = ?`;
         queryParams.push(hours);
