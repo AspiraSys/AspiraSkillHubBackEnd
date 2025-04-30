@@ -13,6 +13,7 @@ router.get("/aspirants-progress", (req, res) => {
     const query = `
         SELECT
             s.id, 
+            s.user_id,
             CONCAT(s.first_name, ' ', COALESCE(s.last_name, '')) AS full_name,
             s.aspirant_id, 
             s.gender, 
@@ -111,38 +112,94 @@ router.get("/timesheets", async (req, res) => {
 
 // Get filtered timesheets by user_id with additional filters (month, hours, type)
 // GET http://localhost:5000/api/admin/timesheet/1?month=2024-02&hours=08&type=1
+// router.get("/timesheet/:user_id", (req, res) => {
+//     const userId = req.params.user_id;
+//     const { month, startDate, endDate, type, hours } = req.query;
+
+//     let query = `SELECT * FROM student_timesheets WHERE user_id = ?`;
+//     let queryParams = [userId];
+
+//     // Filter by month (format: YYYY-MM)
+//     if (month) {
+//         query += ` AND DATE_FORMAT(date, '%Y-%m') = ?`;
+//         queryParams.push(month);
+//     }
+
+//     // Filter by date range (startDate and endDate must be in YYYY-MM-DD format)
+//     if (startDate && endDate) {
+//         query += ` AND date BETWEEN ? AND ?`;
+//         queryParams.push(startDate, endDate);
+//     }
+
+//     // Filter by category (type)
+//     if (type) {
+//         query += ` AND type = ?`;
+//         queryParams.push(type);
+//     }
+
+//     // Filter by hours worked
+//     if (hours) {
+//         query += ` AND hours = ?`;
+//         queryParams.push(hours);
+//     }
+
+//     query += ` ORDER BY date DESC`; // Sorting by latest entry
+
+//     db.query(query, queryParams, (err, results) => {
+//         if (err) {
+//             return res.status(500).json({ error: "Database error", details: err.sqlMessage });
+//         }
+
+//         if (results.length === 0) {
+//             return res.status(404).json({ message: "No timesheet records found with the given filters" });
+//         }
+
+//         res.status(200).json(results);
+//     });
+// });
+
 router.get("/timesheet/:user_id", (req, res) => {
     const userId = req.params.user_id;
     const { month, startDate, endDate, type, hours } = req.query;
 
-    let query = `SELECT * FROM student_timesheets WHERE user_id = ?`;
+    let query = `
+        SELECT 
+            st.*, 
+            s.aspirant_id, 
+            s.first_name, 
+            s.last_name
+        FROM student_timesheets st
+        JOIN students s ON st.user_id = s.user_id
+        WHERE st.user_id = ?
+    `;
+
     let queryParams = [userId];
 
-    // Filter by month (format: YYYY-MM)
+    // Filter by month
     if (month) {
-        query += ` AND DATE_FORMAT(date, '%Y-%m') = ?`;
+        query += ` AND DATE_FORMAT(st.date, '%Y-%m') = ?`;
         queryParams.push(month);
     }
 
-    // Filter by date range (startDate and endDate must be in YYYY-MM-DD format)
+    // Filter by date range
     if (startDate && endDate) {
-        query += ` AND date BETWEEN ? AND ?`;
+        query += ` AND st.date BETWEEN ? AND ?`;
         queryParams.push(startDate, endDate);
     }
 
-    // Filter by category (type)
+    // Filter by type
     if (type) {
-        query += ` AND type = ?`;
+        query += ` AND st.type = ?`;
         queryParams.push(type);
     }
 
-    // Filter by hours worked
+    // Filter by hours
     if (hours) {
-        query += ` AND hours = ?`;
+        query += ` AND st.hours = ?`;
         queryParams.push(hours);
     }
 
-    query += ` ORDER BY date DESC`; // Sorting by latest entry
+    query += ` ORDER BY st.date DESC`;
 
     db.query(query, queryParams, (err, results) => {
         if (err) {
@@ -156,7 +213,6 @@ router.get("/timesheet/:user_id", (req, res) => {
         res.status(200).json(results);
     });
 });
-
 
 
 
