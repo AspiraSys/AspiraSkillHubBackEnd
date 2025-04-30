@@ -14,7 +14,7 @@ exports.createTechnology = (req, res) => {
     if (!technolgy_id || !name || !no_stages) {
       return res.status(400).json({ error: "Required fields are missing" });
     }
-    const sql = "INSERT INTO technologies (technolgy_id, name, description, image, no_stages, languages, other_technology) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    const sql = "INSERT INTO technologies (technolgy_id, name, description, image, no_stages, languages, other_technology,created_at) VALUES (?, ?, ?, ?, ?, ?, ?,now())";
     db.query(sql, [technolgy_id, name, description, image, no_stages, languages, other_technology], (err, result) => {
       if (err) {
         res.status(500).json({ error: err.message });
@@ -27,7 +27,7 @@ exports.createTechnology = (req, res) => {
 exports.updateTechnology =  (req, res) => {
     const { id } = req.params;
     const { name, description, image, no_stages, languages, other_technology } = req.body;
-    const sql = "UPDATE technologies SET name=?, description=?, image=?, no_stages=?, languages=?, other_technology=? WHERE id=?";
+    const sql = "UPDATE technologies SET name=?, description=?, image=?, no_stages=?, languages=?, other_technology=?, updated_at=now() WHERE id=?";
     db.query(sql, [name, description, image, no_stages, languages, other_technology, id], (err, result) => {
       if (err) {
         res.status(500).json({ error: err.message });
